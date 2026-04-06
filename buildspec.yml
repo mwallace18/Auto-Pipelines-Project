@@ -4,16 +4,28 @@ phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 449272628177.dkr.ecr.us-east-1.amazonaws.com
+      - AWS_ACCOUNT_ID=449272628177
+      - AWS_DEFAULT_REGION=us-east-1
+      - IMAGE_REPO_NAME=springboot-app
+      - IMAGE_TAG=latest
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
 
   build:
     commands:
-      - echo Build started
+      - echo Build started on `date`
       - mvn clean package -DskipTests
-      - docker build -t springboot-app .
-      - docker tag springboot-app:latest 449272628177.dkr.ecr.us-east-1.amazonaws.com/springboot-app:latest
+      - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
+      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG
 
   post_build:
     commands:
-      - echo Pushing image
-      - docker push 449272628177.dkr.ecr.us-east-1.amazonaws.com/springboot-app:latest
+      - echo Pushing Docker image...
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - echo Writing imagedefinitions.json...
+      - printf '[{"name":"springboot-app","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - cat imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json

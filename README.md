@@ -176,3 +176,4 @@ The Spring PetClinic sample application is released under version 2.0 of the [Ap
 # trigger again
 # auto trigger test
 FINAL FINAL TEST
+FINAL FINAL FINAL TEST
